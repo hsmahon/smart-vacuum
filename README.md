@@ -33,17 +33,17 @@ Run the subscriber in the first terminal. Wait for its MQTT subscription acknowl
 
 ```sh
 . .venv/bin/activate
-python gyro_channel.py --seconds 7200
+python scripts/gyro_channel.py --seconds 7200
 ```
 
 Use a second terminal for control. Check that the floor is clear before starting.
 
 ```sh
 . .venv/bin/activate
-python vacuumctl.py status
-python vacuumctl.py start
+python scripts/vacuumctl.py status
+python scripts/vacuumctl.py start
 # When the test is complete:
-python vacuumctl.py home
+python scripts/vacuumctl.py home
 ```
 
 Press Ctrl-C in the first terminal after the test. The recorder saves raw envelopes in `gyro-captures/` and imports completed packets into `telemetry.duckdb`. Each packet is checked for length and CRC32. The original data is retained alongside decoded points. The linked Tuya project is required for the gyro MQTT session.
@@ -57,7 +57,7 @@ ORDER BY capture_name, source_offset, record_index, point_index;
 Export one run by substituting its capture filename and hexadecimal record ID from the query.
 
 ```sh
-python gyro_plot.py CAPTURE.jsonl RECORD_HEX route-preview.html
+python scripts/gyro_plot.py CAPTURE.jsonl RECORD_HEX route-preview.html
 xdg-open route-preview.html
 ```
 
@@ -67,11 +67,15 @@ Coordinates are grid units. Dock-relative coordinates require a consistent repor
 
 ```sh
 mkdir -p lan-captures
-python lan_capture.py --address VACUUM_LAN_IP --seconds 120 \
+python scripts/lan_capture.py --address VACUUM_LAN_IP --seconds 120 \
   --key-file ~/.config/smart-vacuum/lan.json "lan-captures/run-$(date +%s).jsonl"
-python telemetry_db.py
+python scripts/telemetry_db.py
 ```
 
 The first use gets the local credential from your linked Tuya project. Later sessions reuse the saved credential. The LAN collector polls every three seconds and records pushes between polls in the same capture. The importer stores the results in `lan_frames`. Observed fields include battery, state, cleaning time, area, fault and cleaning-record ID. The gyro route arrived on a separate MQTT topic.
 
 Keep credentials, raw captures, databases and generated plots private. Route points can reveal an indoor layout.
+
+## Optional iOS capture component
+
+[TuyaRouteCapture.swift](TuyaRouteCapture.swift) is an earlier prototype for an iOS app built with Tuya's Sweeper SDK. It listens for gyro map callbacks and saves their bytes as timestamped JSONL. It requires a host iOS app and a signed-in Tuya SDK session with access to the vacuum. The Linux MQTT workflow runs independently of it.

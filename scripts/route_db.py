@@ -40,7 +40,7 @@ WITH steps AS (
 SELECT *, sqrt(dx * dx + dy * dy) AS step_grid_units,
        CASE WHEN dx <> 0 OR dy <> 0 THEN degrees(atan2(dy, dx)) END AS direction_deg
 FROM steps;
-""" + Path(__file__).with_name("robot_motion.sql").read_text()
+""" + (Path(__file__).resolve().parents[1] / "robot_motion.sql").read_text()
 
 
 def read_packets(log, capture_name, offset):

@@ -37,6 +37,6 @@ if __name__ == "__main__":
     parser.add_argument("capture")
     parser.add_argument("record_hex")
     parser.add_argument("output", type=Path)
-    parser.add_argument("--database", type=Path, default=Path(__file__).with_name("telemetry.duckdb"))
+    parser.add_argument("--database", type=Path, default=Path(__file__).resolve().parents[1] / "telemetry.duckdb")
     args = parser.parse_args()
     render(args.database, args.capture, args.record_hex, args.output)

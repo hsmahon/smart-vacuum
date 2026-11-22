@@ -13,7 +13,7 @@ import duckdb
 from route_db import SCHEMA as ROUTE_SCHEMA, sync_routes
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS samples (

@@ -75,7 +75,7 @@ def capture(seconds, output):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    root = Path(__file__).resolve().parent
+    root = Path(__file__).resolve().parents[1]
     parser.add_argument("output", type=Path, nargs="?", help="new raw MQTT capture; defaults to gyro-captures/")
     parser.add_argument("--database", type=Path, default=root / "telemetry.duckdb",
                         help="DuckDB destination for completed capture")

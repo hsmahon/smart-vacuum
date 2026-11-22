@@ -67,6 +67,6 @@ def listen(out, on_ready=None):
 
 if __name__ == "__main__":
     os.umask(0o077)
-    with Path(__file__).with_name("movement-events.jsonl").open("a", buffering=1) as out:
+    with (Path(__file__).resolve().parents[1] / "movement-events.jsonl").open("a", buffering=1) as out:
         while True:
             listen(out)
