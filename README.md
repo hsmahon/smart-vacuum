@@ -1,6 +1,6 @@
 # smart-vacuum
 
-Linux tools for controlling a Tikom G8000 Max, capturing its Tuya gyroscope map stream, and exploring robot positions in DuckDB.
+Control a Tikom G8000 Max from Linux, capture its Tuya gyroscope map stream, and explore the reported positions in DuckDB or an interactive HTML plot.
 
 | Task | Tool | Output |
 | --- | --- | --- |
@@ -33,6 +33,19 @@ flowchart LR
 - [Control and LAN telemetry](docs/control-and-telemetry.md)
 - [Contributor guide](AGENTS.md)
 
+## Automatic cleaning run
+
+One automatic cycle completed in **24 minutes** and ended with the vacuum reporting `charge_done`. The capture yielded **601 position reports** with **zero decode errors**. The status API reported the return to dock after the MQTT stream stopped delivering positions.
+
+```mermaid
+xychart-beta
+    x-axis ["Cleaning", "Going home"]
+    y-axis "Position reports" 0 --> 650
+    bar [601, 0]
+```
+
+The chart shows report counts by phase. The [local route export](#3-view-the-route) shows the recorded coordinates.
+
 ## 1. Set up
 
 Use Python 3.10 or later on Linux. Link the vacuum to a Tuya Smart Home cloud project and authorize access to the device and device MQTT service.
@@ -45,7 +58,7 @@ install -d -m 700 ~/.config/smart-vacuum
 (umask 077; touch ~/.config/smart-vacuum/cloud.json)
 ```
 
-Edit the private file with your project Access ID, Access Secret, device ID, and data center. The example uses the data center verified on the G8000 Max. The client also supports `eastern-america`.
+Set your Access ID, Access Secret, device ID, and data center in `~/.config/smart-vacuum/cloud.json`. Use the data center for your linked Tuya project.
 
 ```json
 {
@@ -75,11 +88,11 @@ Use this terminal to start the vacuum and send it home. Check that the floor is 
 . .venv/bin/activate
 python scripts/vacuumctl.py status
 python scripts/vacuumctl.py start
-# When the test is complete:
+# To end a bounded test:
 python scripts/vacuumctl.py home
 ```
 
-Press Ctrl-C in the first terminal after the test. The recorder saves raw envelopes in `gyro-captures/` and imports completed packets into `telemetry.duckdb`. Each packet is checked for length and CRC32. The original data is retained alongside decoded points. The linked Tuya project is required for the gyro MQTT session.
+For a full automatic cycle, let the vacuum return on its own. For a bounded test, use the `home` command above. Verify that status reports `charging` or `charge_done`, then press Ctrl-C in the capture terminal. The recorder saves raw envelopes in `gyro-captures/` and imports the packets and decoded points into `telemetry.duckdb`. The decoder checks framing and CRC32.
 
 ## 3. View the route
 
@@ -98,7 +111,7 @@ python scripts/gyro_plot.py CAPTURE.jsonl RECORD_HEX route-preview.html
 xdg-open route-preview.html
 ```
 
-Coordinates are grid units. Dock-relative coordinates require a consistent reported dock location. Calibrate against a measured floor segment before converting to metres. The plotted lines connect received points in order and may bridge gaps in the capture.
+Coordinates are in grid units, with the reported dock at the origin. A consistent dock location is required for export. Calibrate against a measured floor segment before converting to metres. Lines join successive reports and may span gaps.
 
 ## Record status directly over Wi-Fi
 
