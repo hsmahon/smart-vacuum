@@ -13,18 +13,12 @@ Control a Tikom G8000 Max from Linux, capture its Tuya gyroscope map stream, and
 
 ```mermaid
 flowchart LR
-    App["Tuya Smart app"] -->|Wi-Fi setup and account linking| Vacuum["Tikom G8000 Max"]
-    Control["vacuumctl.py"] -->|Commands and status queries| Cloud["Tuya cloud"]
-    Cloud <-->|Wi-Fi| Vacuum
-    Cloud -->|Device MQTT map stream| Gyro["gyro_channel.py"]
-    Gyro --> Raw["Raw MQTT JSONL"]
-    Raw --> Decode["route_db.py + gyro_frames.py"]
-    Decode -->|Packets and decoded points| DB[("DuckDB")]
-    DB -->|gyro_positions| Plot["gyro_plot.py → HTML route"]
-    Vacuum <-->|Authenticated LAN status| LAN["lan_capture.py"]
-    LAN --> LANRaw["Raw LAN JSONL"]
-    LANRaw --> Import["telemetry_db.py"]
-    Import -->|lan_frames| DB
+    Control["Linux controls"] -->|Commands| Cloud["Tuya cloud"]
+    Cloud <-->|Wi-Fi| Vacuum["Tikom G8000 Max"]
+    Cloud -->|MQTT positions| Capture["Linux collectors"]
+    Vacuum -->|LAN status| Capture
+    Capture --> DB[("DuckDB")]
+    DB --> Plot["HTML route map"]
 ```
 
 ## Documentation
@@ -37,14 +31,9 @@ flowchart LR
 
 One automatic cycle completed in **24 minutes** and ended with the vacuum reporting `charge_done`. The capture yielded **601 position reports** with **zero decode errors**. The status API reported the return to dock after the MQTT stream stopped delivering positions.
 
-```mermaid
-xychart-beta
-    x-axis ["Cleaning", "Going home"]
-    y-axis "Position reports" 0 --> 650
-    bar [601, 0]
-```
+![Automatic cleaning route plotted on a dock-relative X/Y grid](docs/automatic-cleaning-route.png)
 
-The chart shows report counts by phase. The [local route export](#3-view-the-route) shows the recorded coordinates.
+The orange square marks the dock at (0, 0). Dots show reported positions in grid units. [Export an interactive plot](#3-view-the-route) to inspect a local capture.
 
 ## 1. Set up
 
