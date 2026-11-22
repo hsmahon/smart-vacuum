@@ -2,6 +2,10 @@
 
 Control a Tikom G8000 Max from Linux, capture its Tuya gyroscope map stream, and explore the reported positions in DuckDB or an interactive HTML plot.
 
+**Tikom** makes the G8000 Max robot vacuum. Its setup guide uses the Tuya Smart app to connect the vacuum to 2.4 GHz Wi-Fi and pair it with an app account. [Tikom G8000 Max setup guide](https://www.tikom.cc/sqnews.asp?id=390)
+
+**Tuya Cloud** gives this project a way to work with the paired device from Linux. A linked Smart Home cloud project authorizes API access. The control script uses that access to start cleaning, check status, and request a return to dock. A separate Tuya MQTT connection carries the live gyroscope map reports used to reconstruct the route. The LAN collector reads device status over local Wi-Fi using a cached key after initial setup. [Tuya Smart Home cloud project setup](https://developer.tuya.com/en/docs/iot/Platform_Configuration_smarthome?id=Kamcgamwoevrx)
+
 | Task | Tool | Output |
 | --- | --- | --- |
 | Start cleaning or return to dock | `vacuumctl.py` | Reported vacuum state |
@@ -23,9 +27,17 @@ flowchart LR
 
 ## Documentation
 
-- [Route capture and decoding](docs/route-capture.md)
-- [Control and LAN telemetry](docs/control-and-telemetry.md)
-- [Contributor guide](AGENTS.md)
+Start with **Control and LAN telemetry** if you’re pairing the vacuum or deciding which status source to use. The guide covers Tuya account linking, cloud commands, and which fields the Linux collector can read over local Wi-Fi. [Control and LAN telemetry](docs/control-and-telemetry.md)
+
+Use **Route capture and decoding** to follow an MQTT envelope from capture through parsing and into DuckDB. It explains how to replay a capture, interpret dock-relative coordinates, and account for gaps in the recorded path. [Route capture and decoding](docs/route-capture.md)
+
+The **Contributor guide** describes the script entry points, hardware verification workflow, and which data stays local. [Contributor guide](AGENTS.md)
+
+## Where I’d like to take this
+
+I’d like owners of connected appliances to be able to use their device data with the IoT services they already run. For this vacuum, I’d like to explore a bridge from the Linux collector to an owner-managed MQTT broker such as AWS IoT Core. Publishing a small set of status events, such as cleaning started, docking, or a fault, would let a dashboard or automation subscribe to them. [AWS IoT Core MQTT documentation](https://docs.aws.amazon.com/iot/latest/developerguide/mqtt.html)
+
+Today, the collectors write to local files and DuckDB. AWS IoT Core is a possible destination for selected events. I’d keep credentials, raw packets, and detailed indoor routes local and let the owner choose which events to forward.
 
 ## Automatic cleaning run
 
