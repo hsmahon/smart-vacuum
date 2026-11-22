@@ -30,7 +30,7 @@ This **24-minute** cleaning cycle produced **601 position reports** with **zero 
 
 ![Automatic cleaning route plotted on a dock-relative X/Y grid](docs/automatic-cleaning-route.png)
 
-The orange square marks the dock at (0, 0). Dots show reported positions in grid units. [Export an interactive plot](#3-view-the-route) to inspect a local capture.
+The orange square marks the dock at (0, 0). Dots show reported positions in grid units.
 
 ## 1. Set up
 
@@ -109,15 +109,6 @@ python scripts/telemetry_db.py
 ```
 
 The first run gets a local key from Tuya Cloud. Later runs reuse it. Query `lan_frames` for battery, cleaning status, and other device updates. Route points come from the separate MQTT stream.
-
-> [!IMPORTANT]
-> Keep credentials, raw captures, databases, and generated plots private. Route points can reveal an indoor layout.
-
-## Hardware verification
-
-- **Live route capture** worked on the G8000 Max with Tuya Smart closed after a recent panel session. Availability after a power cycle or long idle period still needs testing.
-- **Cloud control** started cleaning and returned the vacuum to its dock. The manual steering trial produced a nearly straight trace, so drawing shapes remains experimental.
-- **Local status collection** worked over authenticated Tuya LAN 3.4 with a cached credential. The gyro route uses the separate Tuya MQTT connection.
 
 ## Where I’d like to take this
 
