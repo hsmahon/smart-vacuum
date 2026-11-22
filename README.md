@@ -9,6 +9,30 @@ Linux tools for controlling a Tikom G8000 Max, capturing its Tuya gyroscope map 
 | View a captured route | `gyro_plot.py` | Standalone HTML map |
 | Collect status over local Wi-Fi | `lan_capture.py` | Raw LAN frames and DuckDB telemetry |
 
+## System diagram
+
+```mermaid
+flowchart LR
+    App["Tuya Smart app"] -->|Wi-Fi setup and account linking| Vacuum["Tikom G8000 Max"]
+    Control["vacuumctl.py"] -->|Commands and status queries| Cloud["Tuya cloud"]
+    Cloud <-->|Wi-Fi| Vacuum
+    Cloud -->|Device MQTT map stream| Gyro["gyro_channel.py"]
+    Gyro --> Raw["Raw MQTT JSONL"]
+    Raw --> Decode["route_db.py + gyro_frames.py"]
+    Decode -->|Packets and decoded points| DB[("DuckDB")]
+    DB -->|gyro_positions| Plot["gyro_plot.py → HTML route"]
+    Vacuum <-->|Authenticated LAN status| LAN["lan_capture.py"]
+    LAN --> LANRaw["Raw LAN JSONL"]
+    LANRaw --> Import["telemetry_db.py"]
+    Import -->|lan_frames| DB
+```
+
+## Documentation
+
+- [Route capture and decoding](docs/route-capture.md)
+- [Control and LAN telemetry](docs/control-and-telemetry.md)
+- [Contributor guide](AGENTS.md)
+
 ## 1. Set up
 
 Use Python 3.10 or later on Linux. Link the vacuum to a Tuya Smart Home cloud project and authorize access to the device and device MQTT service.
