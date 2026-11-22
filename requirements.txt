@@ -1,0 +1,4 @@
+duckdb
+paho-mqtt>=1.6,<2
+pycryptodome
+tinytuya==1.21.1

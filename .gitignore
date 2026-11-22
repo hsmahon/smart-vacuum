@@ -1,0 +1,20 @@
+.venv/
+__pycache__/
+.env*
+*.duckdb*
+*.jsonl
+*.pcap*
+*.log
+cloud.json
+lan.json
+devices.json
+*tinytuya*.json
+*-captures/
+route-*.html
+
+# Private device observations and local outputs
+LINUX-ROUTE.md
+ROUTE-TRACE.md
+TELEMETRY.md
+g8000-max.yaml
+distance.html
