@@ -1,17 +1,10 @@
 # smart-vacuum
 
-Control a Tikom G8000 Max from Linux, capture its Tuya gyroscope map stream, and explore the reported positions in DuckDB or an interactive HTML plot.
+Control a Tikom G8000 Max from Linux, record where it goes, and open the route as an interactive map in your browser.
 
-**Tikom** makes the G8000 Max robot vacuum. Its setup guide uses the Tuya Smart app to connect the vacuum to 2.4 GHz Wi-Fi and pair it with an app account. [Tikom G8000 Max setup guide](https://www.tikom.cc/sqnews.asp?id=390)
-
-**Tuya Cloud** gives this project a way to work with the paired device from Linux. A linked Smart Home cloud project authorizes API access. The control script uses that access to start cleaning, check status, and request a return to dock. A separate Tuya MQTT connection carries the live gyroscope map reports used to reconstruct the route. The LAN collector reads device status over local Wi-Fi using a cached key after initial setup. [Tuya Smart Home cloud project setup](https://developer.tuya.com/en/docs/iot/Platform_Configuration_smarthome?id=Kamcgamwoevrx)
-
-| Task | Tool | Output |
-| --- | --- | --- |
-| Start cleaning or return to dock | `vacuumctl.py` | Reported vacuum state |
-| Record live positions | `gyro_channel.py` | Raw MQTT packets and DuckDB positions |
-| View a captured route | `gyro_plot.py` | Standalone HTML map |
-| Collect status over local Wi-Fi | `lan_capture.py` | Raw LAN frames and DuckDB telemetry |
+- **Tikom G8000 Max** is the robot vacuum. Pair it with the Tuya Smart app on 2.4 GHz Wi-Fi. [Tikom setup guide](https://www.tikom.cc/sqnews.asp?id=390)
+- **Tuya Cloud** handles start, status, and dock commands. It also delivers the vacuum’s map points over MQTT. [Tuya cloud setup](https://developer.tuya.com/en/docs/iot/Platform_Configuration_smarthome?id=Kamcgamwoevrx)
+- **Linux tools** save the points in DuckDB and turn them into an HTML map. A separate collector reads status directly over local Wi-Fi.
 
 ## System diagram
 
@@ -27,21 +20,13 @@ flowchart LR
 
 ## Documentation
 
-Start with **Control and LAN telemetry** if you’re pairing the vacuum or deciding which status source to use. The guide covers Tuya account linking, cloud commands, and which fields the Linux collector can read over local Wi-Fi. [Control and LAN telemetry](docs/control-and-telemetry.md)
-
-Use **Route capture and decoding** to follow an MQTT envelope from capture through parsing and into DuckDB. It explains how to replay a capture, interpret dock-relative coordinates, and account for gaps in the recorded path. [Route capture and decoding](docs/route-capture.md)
-
-The **Contributor guide** describes the script entry points, hardware verification workflow, and which data stays local. [Contributor guide](AGENTS.md)
-
-## Where I’d like to take this
-
-I’d like owners of connected appliances to be able to use their device data with the IoT services they already run. For this vacuum, I’d like to explore a bridge from the Linux collector to an owner-managed MQTT broker such as AWS IoT Core. Publishing a small set of status events, such as cleaning started, docking, or a fault, would let a dashboard or automation subscribe to them. [AWS IoT Core MQTT documentation](https://docs.aws.amazon.com/iot/latest/developerguide/mqtt.html)
-
-Today, the collectors write to local files and DuckDB. AWS IoT Core is a possible destination for selected events. I’d keep credentials, raw packets, and detailed indoor routes local and let the owner choose which events to forward.
+- Pair the vacuum, send commands, and read local status. [Control and LAN telemetry](docs/control-and-telemetry.md)
+- Replay captures, query points, and interpret gaps in the map. [Route capture and decoding](docs/route-capture.md)
+- Find the scripts, test workflow, and data privacy rules. [Contributor guide](AGENTS.md)
 
 ## Automatic cleaning run
 
-One automatic cycle completed in **24 minutes** and ended with the vacuum reporting `charge_done`. The capture yielded **601 position reports** with **zero decode errors**. The status API reported the return to dock after the MQTT stream stopped delivering positions.
+This **24-minute** cleaning cycle produced **601 position reports** with **zero decode errors**. The vacuum reported that it docked, but the map stream stopped when it began heading home.
 
 ![Automatic cleaning route plotted on a dock-relative X/Y grid](docs/automatic-cleaning-route.png)
 
@@ -49,7 +34,7 @@ The orange square marks the dock at (0, 0). Dots show reported positions in grid
 
 ## 1. Set up
 
-Use Python 3.10 or later on Linux. Link the vacuum to a Tuya Smart Home cloud project and authorize access to the device and device MQTT service.
+From the project root on Linux, use Python 3.10 or later. Link the vacuum to a Tuya Smart Home cloud project with access to the device and MQTT service.
 
 ```sh
 python3 -m venv .venv
@@ -123,7 +108,7 @@ python scripts/lan_capture.py --address VACUUM_LAN_IP --seconds 120 \
 python scripts/telemetry_db.py
 ```
 
-The first use gets the local credential from your linked Tuya project. Later sessions reuse the saved credential. The LAN collector polls every three seconds and records pushes between polls in the same capture. The importer stores the results in `lan_frames`. Observed fields include battery, state, cleaning time, area, fault and cleaning-record ID. The gyro route arrived on a separate MQTT topic.
+The first run gets a local key from Tuya Cloud. Later runs reuse it. Query `lan_frames` for battery, cleaning status, and other device updates. Route points come from the separate MQTT stream.
 
 > [!IMPORTANT]
 > Keep credentials, raw captures, databases, and generated plots private. Route points can reveal an indoor layout.
@@ -133,3 +118,7 @@ The first use gets the local credential from your linked Tuya project. Later ses
 - **Live route capture** worked on the G8000 Max with Tuya Smart closed after a recent panel session. Availability after a power cycle or long idle period still needs testing.
 - **Cloud control** started cleaning and returned the vacuum to its dock. The manual steering trial produced a nearly straight trace, so drawing shapes remains experimental.
 - **Local status collection** worked over authenticated Tuya LAN 3.4 with a cached credential. The gyro route uses the separate Tuya MQTT connection.
+
+## Where I’d like to take this
+
+I’d like owners to be able to send selected events, such as cleaning started or a fault, to an IoT service they manage. AWS IoT Core is one option for connecting those events to a dashboard or automation. Today the collectors save data locally. I’d keep credentials, raw captures, and detailed routes local and let owners choose what to forward. [AWS IoT Core MQTT documentation](https://docs.aws.amazon.com/iot/latest/developerguide/mqtt.html)
